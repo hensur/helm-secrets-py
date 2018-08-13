@@ -15,20 +15,33 @@ sops - https://github.com/mozilla/sops
 """
 
 
+def enc_cmd(args, unknown):
+    print("hello")
+    print(args)
+
+
+def install_cmd(args, unknown):
+    print(args)
+    print(unknown)
+
+
 def main(args):
     parser = argparse.ArgumentParser(description=usage_main)
     subparsers = parser.add_subparsers(title="subcommands")
 
     enc_parser = subparsers.add_parser("enc", help="encrypt a given file")
     enc_parser.add_argument("file", help="file to encrypt")
+    enc_parser.set_defaults(func=enc_cmd)
 
     dec_parser = subparsers.add_parser("dec", help="decrypt a given file")
     dec_parser.add_argument("file", help="file to decrypt")
 
     install_parser = subparsers.add_parser("install", help="wrapper for helm \
             install that decrypts secret files before execution")
+    install_parser.set_defaults(func=install_cmd)
 
-    print(parser.parse_known_args(args))
+    parsed, unknown = parser.parse_known_args(args)
+    parsed.func(parsed, unknown)
 
     if len(args) < 1:
         parser.print_help()
