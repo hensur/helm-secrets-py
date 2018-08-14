@@ -5,6 +5,7 @@ Calls sops to encrypt or decrypt a file
 import subprocess
 import yaml
 import sys
+import os
 
 
 def is_enc(file):
@@ -12,7 +13,7 @@ def is_enc(file):
         doc = yaml.load(f)
         try:
             doc["sops"]["version"]
-        except KeyError:
+        except (KeyError, TypeError):
             return False
     return True
 
@@ -31,13 +32,13 @@ def __sops(args, file, inplace, outfile):
     """
     args are the first sops arguments
     """
-    sops_args = args
+    args.insert(0, "sops")
 
     if inplace:
-        sops_args.extend(["-i", file])
-        process = subprocess.run(sops_args)
+        args.extend(["-i", file])
+        process = subprocess.run(args)
     else:
-        sops_args.append(file)
-        process = subprocess.run(sops_args, stdout=outfile)
+        args.append(file)
+        process = subprocess.run(args, stdout=outfile, cwd=os.path.dirname(file))
 
     process.check_returncode()

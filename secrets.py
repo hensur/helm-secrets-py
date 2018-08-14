@@ -5,6 +5,7 @@ helm plugin to manage secret values using mozilla sops
 
 import argparse
 import sys
+import cmd
 
 usage_main = """GnuPG secrets encryption in Helm Charts
 This plugin provides ability to encrypt/decrypt secrets files
@@ -16,29 +17,31 @@ sops - https://github.com/mozilla/sops
 
 
 def enc_cmd(args, unknown):
-    print("hello")
-    print(args)
+    cmd.enc(args.file)
 
 
 def dec_cmd(args, unknown):
-    print(args)
+    cmd.dec(args.file)
 
 
 def view_cmd(args, unknown):
-    print(args)
+    cmd.view(args.file)
 
 
 def clean_cmd(args, unknown):
-    print(args)
+    cmd.clean(args.dir)
+
+
+def deploy_cmd(args, unknown):
+    cmd.deploy(args.mode, args.dir, args.parent, args.keep)
 
 
 def install_cmd(args, unknown):
-    print(args)
-    print(unknown)
+    cmd.install(unknown)
 
 
 def upgrade_cmd(args, unknown):
-    print(args)
+    cmd.upgrade(unknown)
 
 
 def main(args):
@@ -53,13 +56,24 @@ def main(args):
     dec_parser.add_argument("file", help="file to decrypt")
     dec_parser.set_defaults(func=dec_cmd)
 
-    view_parser = subparsers.add_parser("view", help="view a given file (decrypted)")
+    view_parser = subparsers.add_parser("view",
+                                        help="view a given file (decrypted)")
     view_parser.add_argument("file", help="file to view")
     view_parser.set_defaults(func=view_cmd)
 
-    clean_parser = subparsers.add_parser("clean", help="clean a given file (decrypted)")
-    clean_parser.add_argument("file", help="file to clean")
+    clean_parser = subparsers.add_parser("clean",
+                                         help="clean a given dir (decrypted)")
+    clean_parser.add_argument("dir", help="dir to clean")
     clean_parser.set_defaults(func=clean_cmd)
+
+    deploy_parser = subparsers.add_parser("deploy", help="wrapper for helm, \
+            builds the value file list based on a leaf directory",
+                                          description="test")
+    deploy_parser.add_argument("mode", help="deployment mode (install|upgrade)")
+    deploy_parser.add_argument("dir", help="dir to deploy")
+    deploy_parser.add_argument("-p", "--parent", help="parent dir of the project", default=".")
+    deploy_parser.add_argument("-k", "--keep", help="keep decrypted files", action="store_true")
+    deploy_parser.set_defaults(func=deploy_cmd)
 
     install_parser = subparsers.add_parser("install", help="wrapper for helm \
             install that decrypts secret files before execution")

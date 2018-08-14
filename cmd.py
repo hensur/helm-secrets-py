@@ -9,7 +9,7 @@ import sys
 import glob
 import re
 import subprocess
-import os
+from pathlib import Path
 
 
 def enc(file, remove=False):
@@ -85,22 +85,33 @@ def upgrade(args):
     __helm_wrapper("upgrade", args)
 
 
-def __helm_wrapper(mode, args):
+def __helm_wrapper(mode, args, keep=False):
     secrets_regex = re.compile(r"^(.*\/)?secrets(\.dec)?\.yaml$")
     dec_files = []
     cmd_args = ["helm", mode]
 
-    for f in args:
+    for idx, f in enumerate(args):
+        arg = f
         if secrets_regex.match(f):
             # We found a file, decrypt it
-            dec(f)
+            try:
+                arg = dec(f)
+            except FileExistsError:
+                print("file was not encrypted")
             dec_files.append(f)
-        cmd_args.append(f)
+        cmd_args.append(arg)
 
-    subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("helm cmd:")
+    print(' '.join(cmd_args))
+    # subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    for f in dec_files:
-        enc(f, remove=True)
+    if not keep:
+        for f in dec_files:
+            enc(f, remove=True)
+    else:
+        print("these files have been kept decrypted:")
+        print(' '.join(dec_files))
+        print("encrypt them with ./secrets.py enc")
 
 
 def __decfile(infile):
@@ -122,15 +133,42 @@ def __is_decfile(infile):
     return infile.endswith(".dec.yaml")
 
 
-def deploy(dir, parent_dir):
+def deploy(mode, dir, parent_dir, keep):
     """
     Collect all values and secrets from a leaf directory
     and execute helm install or upgrade
     """
-    print(__subdir_filelist(dir, parent_dir))
+    dir = Path(dir).resolve()
+    parent_dir = Path(parent_dir).resolve()
+
+    if not re.match(r'(upgrade|install)', mode):
+        raise ValueError("mode not supported")
+
+    if not dir.is_dir():
+        raise NotADirectoryError("{} does not exist".format(dir))
+
+    if len([name for name in dir.iterdir()
+            if os.path.isdir(os.path.join(dir, name))]) > 0:
+        raise ValueError("{} has subdirectories".format(dir))
+
+    if (Path(os.path.commonpath([dir, parent_dir])) != parent_dir):
+        raise ValueError("{} is not a leaf in {}".format(dir, parent_dir))
+
+    helm_cmd = []
+    [helm_cmd.extend(["-f", f])
+        for f in __subdir_filelist(dir, parent_dir, [])]
+
+    if mode == "install":
+        helm_cmd.append("-n")
+
+    pName = dir.relative_to(parent_dir).parts[0]  # project name
+    helm_cmd.append(pName)
+    helm_cmd.append(str(parent_dir/pName))
+
+    __helm_wrapper(mode, helm_cmd, keep=keep)
 
 
-def __subdir_filelist(dir, list):
+def __subdir_filelist(dir, parent_dir, list):
     """
     Build a file list of values.yaml and secrets.yaml files
     recursively going up from a leaf directory
@@ -139,14 +177,10 @@ def __subdir_filelist(dir, list):
     __subdir_file_tolist("values.yaml", dir, list)
     __subdir_file_tolist("secrets.yaml", dir, list)
 
-    if __parent_dir(dir) is not dir:
-        return __subdir_filelist(__parent_dir(dir), list)
+    if parent_dir == dir:
+        return list
 
-    return list
-
-
-def __parent_dir(dir):
-    return os.path.abspath(os.path.join(dir, os.pardir))
+    return __subdir_filelist(dir.parent, parent_dir, list)
 
 
 def __subdir_file_tolist(file, dir, list):
