@@ -20,9 +20,25 @@ def enc_cmd(args, unknown):
     print(args)
 
 
+def dec_cmd(args, unknown):
+    print(args)
+
+
+def view_cmd(args, unknown):
+    print(args)
+
+
+def clean_cmd(args, unknown):
+    print(args)
+
+
 def install_cmd(args, unknown):
     print(args)
     print(unknown)
+
+
+def upgrade_cmd(args, unknown):
+    print(args)
 
 
 def main(args):
@@ -35,17 +51,31 @@ def main(args):
 
     dec_parser = subparsers.add_parser("dec", help="decrypt a given file")
     dec_parser.add_argument("file", help="file to decrypt")
+    dec_parser.set_defaults(func=dec_cmd)
+
+    view_parser = subparsers.add_parser("view", help="view a given file (decrypted)")
+    view_parser.add_argument("file", help="file to view")
+    view_parser.set_defaults(func=view_cmd)
+
+    clean_parser = subparsers.add_parser("clean", help="clean a given file (decrypted)")
+    clean_parser.add_argument("file", help="file to clean")
+    clean_parser.set_defaults(func=clean_cmd)
 
     install_parser = subparsers.add_parser("install", help="wrapper for helm \
             install that decrypts secret files before execution")
     install_parser.set_defaults(func=install_cmd)
 
+    upgrade_parser = subparsers.add_parser("upgrade", help="wrapper for helm \
+            upgrade that decrypts secret files before execution")
+    upgrade_parser.set_defaults(func=upgrade_cmd)
+
     parsed, unknown = parser.parse_known_args(args)
-    parsed.func(parsed, unknown)
 
     if len(args) < 1:
         parser.print_help()
         sys.exit(1)
+
+    parsed.func(parsed, unknown)
 
 
 if __name__ == "__main__":
