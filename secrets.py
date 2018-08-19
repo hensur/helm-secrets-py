@@ -85,7 +85,7 @@ def main(args):
 
     parsed, unknown = parser.parse_known_args(args)
 
-    if len(args) < 1:
+    if not args:
         parser.print_help()
         sys.exit(1)
 
@@ -94,4 +94,3 @@ def main(args):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
