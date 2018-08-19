@@ -10,6 +10,7 @@ import glob
 import re
 import subprocess
 from pathlib import Path
+import yaml
 
 
 def enc(file, remove=False):
@@ -155,35 +156,60 @@ def deploy(mode, dir, parent_dir, keep):
         raise ValueError("{} is not a leaf in {}".format(dir, parent_dir))
 
     helm_cmd = []
-    [helm_cmd.extend(["-f", f])
-        for f in __subdir_filelist(dir, parent_dir, [])]
+
+    config = __deployment_config(dir, parent_dir)
+    if __get_key(config, "namespace"):
+        helm_cmd.extend(["--namespace", __get_key(config, "namespace")])
+
+    project_name = dir.relative_to(parent_dir).parts[0]  # project name
+    if __get_key(config, "name"):
+        project_name = __get_key(config, "name")
+
+    scan_for = ["values.yaml", "secrets.yaml"]
+    for f in __subdir_filelist(scan_for, dir, parent_dir, []):
+        helm_cmd.extend(["-f", f])
 
     if mode == "install":
         helm_cmd.append("-n")
 
-    pName = dir.relative_to(parent_dir).parts[0]  # project name
-    helm_cmd.append(pName)
-    helm_cmd.append(str(parent_dir/pName))
+    helm_cmd.append(project_name)
+    helm_cmd.append(str(parent_dir/project_name))
 
     __helm_wrapper(mode, helm_cmd, keep=keep)
 
 
-def __subdir_filelist(dir, parent_dir, list):
+def __subdir_filelist(files, dirname, parent_dir, filelist):
     """
     Build a file list of values.yaml and secrets.yaml files
     recursively going up from a leaf directory
     """
 
-    __subdir_file_tolist("values.yaml", dir, list)
-    __subdir_file_tolist("secrets.yaml", dir, list)
+    for filename in files:
+        __subdir_file_tolist(filename, dirname, filelist)
 
-    if parent_dir == dir:
-        return list
+    if parent_dir == dirname:
+        return filelist
 
-    return __subdir_filelist(dir.parent, parent_dir, list)
+    return __subdir_filelist(files, dirname.parent, parent_dir, filelist)
 
 
-def __subdir_file_tolist(file, dir, list):
-    f = os.path.join(dir, file)
-    if os.path.isfile(f):
-        list.append(f)
+def __subdir_file_tolist(filename, dirname, filelist):
+    resfile = os.path.join(dirname, filename)
+    if os.path.isfile(resfile):
+        filelist.append(resfile)
+
+
+def __get_key(data, keyname):
+    try:
+        return data[keyname]
+    except KeyError:
+        return ""
+
+
+def __deployment_config(dirname, parent_dir):
+    possible_files = __subdir_filelist([".deployment.yaml"],
+                                       dirname, parent_dir, [])
+    if possible_files[0]:
+        return yaml.load(possible_files[0])
+
+    return None
