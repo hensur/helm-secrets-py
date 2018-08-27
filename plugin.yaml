@@ -1,0 +1,9 @@
+name: "secrets"
+version: "3.0.0"
+usage: "Secrets encryption in Helm for Git storing"
+description: |-
+  This plugin provides secrets values encryption for Helm charts secure storing
+command: "$HELM_PLUGIN_DIR/secrets.py"
+hooks:
+  install: "$HELM_PLUGIN_DIR/install.sh"
+  update: "$HELM_PLUGIN_DIR/install.sh"
