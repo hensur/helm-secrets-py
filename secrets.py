@@ -33,7 +33,7 @@ def clean_cmd(args, unknown):
 
 
 def deploy_cmd(args, unknown):
-    cmd.deploy(args.mode, args.dir, args.parent, args.keep)
+    cmd.deploy(args.mode, args.dir, args.parent, args.keep, dryrun=args.dry_run)
 
 
 def install_cmd(args, unknown):
@@ -46,7 +46,7 @@ def upgrade_cmd(args, unknown):
 
 def main(args):
     parser = argparse.ArgumentParser(description=usage_main)
-    subparsers = parser.add_subparsers(title="subcommands")
+    subparsers = parser.add_subparsers(title="commands")
 
     enc_parser = subparsers.add_parser("enc", help="encrypt a given file")
     enc_parser.add_argument("file", help="file to encrypt")
@@ -73,6 +73,8 @@ def main(args):
     deploy_parser.add_argument("dir", help="dir to deploy")
     deploy_parser.add_argument("-p", "--parent", help="parent dir of the project", default=".")
     deploy_parser.add_argument("-k", "--keep", help="keep decrypted files", action="store_true")
+    deploy_parser.add_argument("--dry-run", help="execute helm in dry-run mode \
+            and print computed commands", action="store_true")
     deploy_parser.set_defaults(func=deploy_cmd)
 
     install_parser = subparsers.add_parser("install", help="wrapper for helm \
