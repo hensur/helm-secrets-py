@@ -102,9 +102,11 @@ def __helm_wrapper(mode, args, keep=False):
             dec_files.append(f)
         cmd_args.append(arg)
 
-    print("helm cmd:")
-    print(' '.join(cmd_args))
-    # subprocess.run(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.run(cmd_args, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+    # TODO: Improve this
+    print(process.stdout.decode())
+    print(process.stderr.decode())
 
     if not keep:
         for f in dec_files:
@@ -134,46 +136,54 @@ def __is_decfile(infile):
     return infile.endswith(".dec.yaml")
 
 
-def deploy(mode, dir, parent_dir, keep):
+def deploy(mode, project, parent_dir, keep, dryrun=False):
     """
     Collect all values and secrets from a leaf directory
     and execute helm install or upgrade
     """
-    dir = Path(dir).resolve()
+    project = Path(project).resolve()
     parent_dir = Path(parent_dir).resolve()
 
     if not re.match(r'(upgrade|install)', mode):
         raise ValueError("mode not supported")
 
-    if not dir.is_dir():
-        raise NotADirectoryError("{} does not exist".format(dir))
+    if not project.is_dir():
+        # Use parent dir if specified project is a file
+        project = project.parent
 
-    if len([name for name in dir.iterdir()
-            if os.path.isdir(os.path.join(dir, name))]) > 0:
-        raise ValueError("{} has subdirectories".format(dir))
+    if len([name for name in project.iterdir()
+            if os.path.isdir(os.path.join(project, name))]) > 0:
+        raise ValueError("{} has subdirectories".format(project))
 
-    if (Path(os.path.commonpath([dir, parent_dir])) != parent_dir):
-        raise ValueError("{} is not a leaf in {}".format(dir, parent_dir))
+    if (Path(os.path.commonpath([project, parent_dir])) != parent_dir):
+        raise ValueError("{} is not a leaf in {}".format(project, parent_dir))
 
     helm_cmd = []
 
-    config = __deployment_config(dir, parent_dir)
+    if dryrun:
+        helm_cmd.append("--dry-run")
+
+    config = __deployment_config(project, parent_dir)
     if __get_key(config, "namespace"):
         helm_cmd.extend(["--namespace", __get_key(config, "namespace")])
 
-    project_name = dir.relative_to(parent_dir).parts[0]  # project name
+    project_name = project.relative_to(parent_dir).parts[0]  # project name
+    release_name = project_name
     if __get_key(config, "name"):
-        project_name = __get_key(config, "name")
+        release_name = __get_key(config, "name")
 
     scan_for = ["values.yaml", "secrets.yaml"]
-    for f in __subdir_filelist(scan_for, dir, parent_dir, []):
+    for f in __subdir_filelist(scan_for, project, parent_dir, []):
         helm_cmd.extend(["-f", f])
 
     if mode == "install":
         helm_cmd.append("-n")
 
-    helm_cmd.append(project_name)
+    helm_cmd.append(release_name)
     helm_cmd.append(str(parent_dir/project_name))
+
+    if dryrun:
+        print(" ".join(helm_cmd))
 
     __helm_wrapper(mode, helm_cmd, keep=keep)
 
@@ -201,7 +211,8 @@ def __subdir_file_tolist(filename, dirname, filelist):
 
 def __get_key(data, keyname):
     try:
-        return data[keyname]
+        if data:
+            return data[keyname]
     except KeyError:
         return ""
 
@@ -209,7 +220,9 @@ def __get_key(data, keyname):
 def __deployment_config(dirname, parent_dir):
     possible_files = __subdir_filelist([".deployment.yaml"],
                                        dirname, parent_dir, [])
-    if possible_files[0]:
-        return yaml.load(possible_files[0])
+    if possible_files:
+        # Always load the first file
+        with open(possible_files[0]) as f:
+            return yaml.load(f)
 
     return None
