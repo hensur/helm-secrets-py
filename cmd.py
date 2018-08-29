@@ -136,16 +136,13 @@ def __is_decfile(infile):
     return infile.endswith(".dec.yaml")
 
 
-def deploy(mode, project, parent_dir, keep, dryrun=False):
+def deploy(project, parent_dir, keep, dryrun=False):
     """
     Collect all values and secrets from a leaf directory
     and execute helm install or upgrade
     """
     project = Path(project).resolve()
     parent_dir = Path(parent_dir).resolve()
-
-    if not re.match(r'(upgrade|install)', mode):
-        raise ValueError("mode not supported")
 
     if not project.is_dir():
         # Use parent dir if specified project is a file
@@ -158,7 +155,7 @@ def deploy(mode, project, parent_dir, keep, dryrun=False):
     if (Path(os.path.commonpath([project, parent_dir])) != parent_dir):
         raise ValueError("{} is not a leaf in {}".format(project, parent_dir))
 
-    helm_cmd = []
+    helm_cmd = ["--install"]  # install or upgrade in one mode
 
     if dryrun:
         helm_cmd.append("--dry-run")
@@ -176,16 +173,13 @@ def deploy(mode, project, parent_dir, keep, dryrun=False):
     for f in __subdir_filelist(scan_for, project, parent_dir, []):
         helm_cmd.extend(["-f", f])
 
-    if mode == "install":
-        helm_cmd.append("-n")
-
     helm_cmd.append(release_name)
     helm_cmd.append(str(parent_dir/project_name))
 
     if dryrun:
         print(" ".join(helm_cmd))
 
-    __helm_wrapper(mode, helm_cmd, keep=keep)
+    __helm_wrapper("upgrade", helm_cmd, keep=keep)
 
 
 def __subdir_filelist(files, dirname, parent_dir, filelist):

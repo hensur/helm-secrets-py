@@ -33,7 +33,7 @@ def clean_cmd(args, unknown):
 
 
 def deploy_cmd(args, unknown):
-    cmd.deploy(args.mode, args.dir, args.parent, args.keep, dryrun=args.dry_run)
+    cmd.deploy(args.dir, args.parent, args.keep, dryrun=args.dry_run)
 
 
 def install_cmd(args, unknown):
@@ -69,7 +69,6 @@ def main(args):
     deploy_parser = subparsers.add_parser("deploy", help="wrapper for helm, \
             builds the value file list based on a leaf directory",
                                           description="test")
-    deploy_parser.add_argument("mode", help="deployment mode (install|upgrade)")
     deploy_parser.add_argument("dir", help="dir to deploy")
     deploy_parser.add_argument("-p", "--parent", help="parent dir of the project", default=".")
     deploy_parser.add_argument("-k", "--keep", help="keep decrypted files", action="store_true")
