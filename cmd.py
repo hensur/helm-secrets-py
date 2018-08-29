@@ -110,11 +110,15 @@ def __helm_wrapper(mode, args, keep=False):
 
     if not keep:
         for f in dec_files:
-            enc(f, remove=True)
+            # file was just decrypted
+            # there is no need to reencrypt before delete
+            os.remove(__decfile(f))
     else:
         print("these files have been kept decrypted:")
         print(' '.join(dec_files))
         print("encrypt them with ./secrets.py enc")
+
+    return process.returncode
 
 
 def __decfile(infile):
