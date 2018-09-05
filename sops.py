@@ -18,27 +18,29 @@ def is_enc(file):
     return True
 
 
-def encrypt(file, inplace=True, outfile=sys.stdout):
+def encrypt(infile, inplace=True, outfile=sys.stdout):
     sops_args = ["-e"]
-    __sops(sops_args, file, inplace, outfile)
+    __sops(sops_args, infile, inplace, outfile)
 
 
-def decrypt(file, inplace=True, outfile=sys.stdout):
+def decrypt(infile, inplace=True, outfile=sys.stdout):
     sops_args = ["-d"]
-    __sops(sops_args, file, inplace, outfile)
+    __sops(sops_args, infile, inplace, outfile)
 
 
-def __sops(args, file, inplace, outfile):
+def __sops(args, infile, inplace, outfile):
     """
     args are the first sops arguments
     """
     args.insert(0, "sops")
 
+    f = os.path.basename(infile)
+    wd = os.path.dirname(infile)
     if inplace:
-        args.extend(["-i", file])
-        process = subprocess.run(args)
+        args.extend(["-i", f])
+        process = subprocess.run(args, cwd=wd)
     else:
-        args.append(file)
-        process = subprocess.run(args, stdout=outfile, cwd=os.path.dirname(file))
+        args.append(f)
+        process = subprocess.run(args, stdout=outfile, cwd=wd)
 
     process.check_returncode()

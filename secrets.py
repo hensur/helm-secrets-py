@@ -21,7 +21,8 @@ def enc_cmd(args, unknown):
 
 
 def dec_cmd(args, unknown):
-    cmd.dec(args.file)
+    f = cmd.dec(args.file)
+    print("decrypted to: " + f)
 
 
 def view_cmd(args, unknown):
