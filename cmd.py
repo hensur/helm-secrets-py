@@ -173,8 +173,8 @@ def deploy(project, parent_dir, keep, dryrun=False):
     if __get_key(config, "name"):
         release_name = __get_key(config, "name")
 
-    scan_for = ["values.yaml", "secrets.yaml"]
-    for f in __subdir_filelist(scan_for, project, parent_dir, []):
+    scan_for = ["secrets.yaml", "values.yaml"]
+    for f in reversed(__subdir_filelist(scan_for, project, parent_dir, [])):
         helm_cmd.extend(["-f", f])
 
     helm_cmd.append(release_name)
