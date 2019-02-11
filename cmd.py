@@ -33,8 +33,11 @@ def enc(file, remove=False):
             raise FileExistsError("file is already encrypted")
     else:
         if __is_decfile(file):
+            with open(__encfile(file), "w") as of:
+                sops.encrypt(file, inplace=False, outfile=of)
+        else:
             file = __encfile(file)
-        sops.encrypt(file)
+            sops.encrypt(file)
 
 
 def dec(file):
@@ -131,7 +134,7 @@ def __decfile(infile):
 def __encfile(infile):
     if __is_decfile(infile):
         # strips 2 times: .dec.yaml and appends .yaml
-        return os.path.splitext(os.path.splitext(infile)[0]) + ".yaml"
+        return os.path.splitext(os.path.splitext(infile)[0])[0] + ".yaml"
     else:
         return infile
 
