@@ -89,14 +89,14 @@ def upgrade(args):
     __helm_wrapper("upgrade", args)
 
 
-def __helm_wrapper(mode, args, keep=False):
+def __helm_wrapper(mode, args, keep=False, skipdec=False):
     secrets_regex = re.compile(r"^(.*\/)?secrets(\.dec)?\.yaml$")
     dec_files = []
     cmd_args = ["helm", mode]
 
     for idx, f in enumerate(args):
         arg = f
-        if secrets_regex.match(f):
+        if not skipdec and secrets_regex.match(f):
             # We found a file, decrypt it
             try:
                 arg = dec(f)
@@ -143,7 +143,7 @@ def __is_decfile(infile):
     return infile.endswith(".dec.yaml")
 
 
-def deploy(project, parent_dir, keep, dryrun=False):
+def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     """
     Collect all values and secrets from a leaf directory
     and execute helm install or upgrade
@@ -186,7 +186,7 @@ def deploy(project, parent_dir, keep, dryrun=False):
     if dryrun:
         print(" ".join(helm_cmd))
 
-    __helm_wrapper("upgrade", helm_cmd, keep=keep)
+    __helm_wrapper("upgrade", helm_cmd, keep=keep, skipdec=skipdec)
 
 
 def __subdir_filelist(files, dirname, parent_dir, filelist):
