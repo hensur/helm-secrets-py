@@ -46,6 +46,10 @@ def install_cmd(args, unknown):
     cmd.install(unknown)
 
 
+def cmdline_cmd(args, unknown):
+    cmd.cmdline(args.dir, args.parent)
+
+
 def upgrade_cmd(args, unknown):
     cmd.upgrade(unknown)
 
@@ -90,6 +94,12 @@ def main(args):
     upgrade_parser = subparsers.add_parser("upgrade", help="wrapper for helm \
             upgrade that decrypts secret files before execution")
     upgrade_parser.set_defaults(func=upgrade_cmd)
+
+    cmdline_parser = subparsers.add_parser("cmdline", help="prints the helm \
+            cmdline that would be executed for deployments")
+    cmdline_parser.set_defaults(func=cmdline_cmd)
+    cmdline_parser.add_argument("dir", help="dir to deploy")
+    cmdline_parser.add_argument("-p", "--parent", help="parent dir of the project", default=".")
 
     parsed, unknown = parser.parse_known_args(args)
 

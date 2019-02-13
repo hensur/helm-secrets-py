@@ -143,6 +143,19 @@ def __is_decfile(infile):
     return infile.endswith(".dec.yaml")
 
 
+def cmdline(project, parent_dir):
+    """
+    Just print the value/secret files
+
+    this can be easily extended for custom helm commands
+    """
+    project = Path(project).resolve()
+    parent_dir = Path(parent_dir).resolve()
+
+    helm_cmd = __build_deploy_cmd(project, parent_dir)
+    print(" ".join(helm_cmd))
+
+
 def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     """
     Collect all values and secrets from a leaf directory
@@ -151,6 +164,19 @@ def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     project = Path(project).resolve()
     parent_dir = Path(parent_dir).resolve()
 
+    helm_cmd = __build_deploy_cmd(project, parent_dir)
+
+    if dryrun:
+        helm_cmd.insert(0, "--dry-run")
+    helm_cmd.insert(0, "--install")  # install or upgrade in one mode
+
+    if dryrun:
+        print(" ".join(helm_cmd))
+
+    __helm_wrapper("upgrade", helm_cmd, keep=keep, skipdec=skipdec)
+
+
+def __build_deploy_cmd(project, parent_dir):
     if not project.is_dir():
         # Use parent dir if specified project is a file
         project = project.parent
@@ -162,10 +188,7 @@ def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     if (Path(os.path.commonpath([project, parent_dir])) != parent_dir):
         raise ValueError("{} is not a leaf in {}".format(project, parent_dir))
 
-    helm_cmd = ["--install"]  # install or upgrade in one mode
-
-    if dryrun:
-        helm_cmd.append("--dry-run")
+    helm_cmd = []
 
     config = __deployment_config(project, parent_dir)
     if __get_key(config, "namespace"):
@@ -183,10 +206,7 @@ def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     helm_cmd.append(release_name)
     helm_cmd.append(str(parent_dir/project_name))
 
-    if dryrun:
-        print(" ".join(helm_cmd))
-
-    __helm_wrapper("upgrade", helm_cmd, keep=keep, skipdec=skipdec)
+    return helm_cmd
 
 
 def __subdir_filelist(files, dirname, parent_dir, filelist):
