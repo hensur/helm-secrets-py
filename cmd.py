@@ -182,10 +182,10 @@ def __build_deploy_cmd(project, parent_dir):
         project = project.parent
 
     if len([name for name in project.iterdir()
-            if os.path.isdir(os.path.join(project, name))]) > 0:
+            if os.path.isdir(os.path.join(str(project), str(name)))]) > 0:
         raise ValueError("{} has subdirectories".format(project))
 
-    if (Path(os.path.commonpath([project, parent_dir])) != parent_dir):
+    if (Path(os.path.commonpath([str(project), str(parent_dir)])) != parent_dir):
         raise ValueError("{} is not a leaf in {}".format(project, parent_dir))
 
     helm_cmd = []
@@ -225,7 +225,7 @@ def __subdir_filelist(files, dirname, parent_dir, filelist):
 
 
 def __subdir_file_tolist(filename, dirname, filelist):
-    resfile = os.path.join(dirname, filename)
+    resfile = os.path.join(str(dirname), str(filename))
     if os.path.isfile(resfile):
         filelist.append(resfile)
 
