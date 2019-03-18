@@ -38,12 +38,13 @@ def deploy_cmd(args, unknown):
     if args.dry_run and args.skip_dec:
         reallyskip = True
         print("skipping decryption")
-    cmd.deploy(args.dir, args.parent, args.keep, dryrun=args.dry_run,
-               skipdec=reallyskip)
+    ret = cmd.deploy(args.dir, args.parent, args.keep, dryrun=args.dry_run,
+                     skipdec=reallyskip)
+    sys.exit(ret)
 
 
 def install_cmd(args, unknown):
-    cmd.install(unknown)
+    sys.exit(cmd.install(unknown))
 
 
 def cmdline_cmd(args, unknown):
@@ -51,7 +52,7 @@ def cmdline_cmd(args, unknown):
 
 
 def upgrade_cmd(args, unknown):
-    cmd.upgrade(unknown)
+    sys.exit(cmd.upgrade(unknown))
 
 
 def main(args):

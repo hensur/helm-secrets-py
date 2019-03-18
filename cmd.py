@@ -79,14 +79,14 @@ def install(args):
     helm install wrapper that decrypts all files, calls helm and
     encrypts the files again
     """
-    __helm_wrapper("install", args)
+    return __helm_wrapper("install", args)
 
 
 def upgrade(args):
     """
     same as install
     """
-    __helm_wrapper("upgrade", args)
+    return __helm_wrapper("upgrade", args)
 
 
 def __helm_wrapper(mode, args, keep=False, skipdec=False):
@@ -173,7 +173,7 @@ def deploy(project, parent_dir, keep, dryrun=False, skipdec=False):
     if dryrun:
         print(" ".join(helm_cmd))
 
-    __helm_wrapper("upgrade", helm_cmd, keep=keep, skipdec=skipdec)
+    return __helm_wrapper("upgrade", helm_cmd, keep=keep, skipdec=skipdec)
 
 
 def __build_deploy_cmd(project, parent_dir):
@@ -204,7 +204,7 @@ def __build_deploy_cmd(project, parent_dir):
         helm_cmd.extend(["-f", f])
 
     helm_cmd.append(release_name)
-    helm_cmd.append(str(parent_dir/project_name))
+    helm_cmd.append(str(parent_dir / project_name))
 
     return helm_cmd
 
