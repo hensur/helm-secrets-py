@@ -17,7 +17,7 @@ def enc(file, remove=False):
     """
     Encrypts the given file in its directory
 
-    If the file is already encrypted, a corresponding secrets.dec.yaml
+    If the file is already encrypted, a corresponding secrets.yaml.dec
     will be encrypted to the original file location.
     """
 
@@ -42,7 +42,7 @@ def enc(file, remove=False):
 
 def dec(file):
     """
-    Decrypt file to .dec.yaml file
+    Decrypt file to .yaml.dec file
     """
 
     if not sops.is_enc(file):
@@ -68,9 +68,9 @@ def view(file):
 
 def clean(dir):
     """
-    encrypt and remove all secrets.dec.yaml files in workdir
+    encrypt and remove all secrets.yaml.dec files in workdir
     """
-    for f in glob.iglob(os.path.join(dir, '/**/*.dec.yaml'), recursive=True):
+    for f in glob.iglob(os.path.join(dir, '/**/*.yaml.dec'), recursive=True):
         enc(f, remove=True)
 
 
@@ -90,7 +90,7 @@ def upgrade(args):
 
 
 def __helm_wrapper(mode, args, keep=False, skipdec=False):
-    secrets_regex = re.compile(r"^(.*\/)?secrets(\.dec)?\.yaml$")
+    secrets_regex = re.compile(r"^(.*\/)?secrets\.yaml(\.dec)?$")
     dec_files = []
     cmd_args = ["helm", mode]
 
@@ -126,21 +126,21 @@ def __helm_wrapper(mode, args, keep=False, skipdec=False):
 
 def __decfile(infile):
     if not __is_decfile(infile):
-        return os.path.splitext(infile)[0] + ".dec.yaml"
+        return os.path.splitext(infile)[0] + ".yaml.dec"
     else:
         return infile
 
 
 def __encfile(infile):
     if __is_decfile(infile):
-        # strips 2 times: .dec.yaml and appends .yaml
+        # strips 2 times: .yaml.dec and appends .yaml
         return os.path.splitext(os.path.splitext(infile)[0])[0] + ".yaml"
     else:
         return infile
 
 
 def __is_decfile(infile):
-    return infile.endswith(".dec.yaml")
+    return infile.endswith(".yaml.dec")
 
 
 def cmdline(project, parent_dir):
