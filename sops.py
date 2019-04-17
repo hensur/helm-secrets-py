@@ -36,6 +36,8 @@ def __sops(args, infile, inplace, outfile):
 
     f = os.path.basename(infile)
     wd = os.path.dirname(infile)
+    if not wd:
+        wd = os.getcwd()
     if inplace:
         args.extend(["-i", f])
         process = subprocess.run(args, cwd=wd)
