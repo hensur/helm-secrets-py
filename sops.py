@@ -19,12 +19,12 @@ def is_enc(file):
 
 
 def encrypt(infile, inplace=True, outfile=sys.stdout):
-    sops_args = ["-e", "--output-type", "yaml"]
+    sops_args = ["-e", "--input-type", "yaml"]
     __sops(sops_args, infile, inplace, outfile)
 
 
 def decrypt(infile, inplace=True, outfile=sys.stdout):
-    sops_args = ["-d", "--input-type", "yaml"]
+    sops_args = ["-d", "--output-type", "yaml"]
     __sops(sops_args, infile, inplace, outfile)
 
 
