@@ -10,7 +10,7 @@ import os
 
 def is_enc(file):
     with open(file, "r") as f:
-        doc = yaml.load(f)
+        doc = yaml.load(f, Loader=yaml.FullLoader)
         try:
             doc["sops"]["version"]
         except (KeyError, TypeError):

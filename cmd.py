@@ -244,6 +244,6 @@ def __deployment_config(dirname, parent_dir):
     if possible_files:
         # Always load the first file
         with open(possible_files[0]) as f:
-            return yaml.load(f)
+            return yaml.load(f, Loader=yaml.FullLoader)
 
     return None
